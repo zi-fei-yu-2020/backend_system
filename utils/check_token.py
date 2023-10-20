@@ -25,9 +25,9 @@ def validate_token(view_func):
                 return Response(code=500, message="error", result={"data": "Invalid token"})
             return view_func(request, *args, **kwargs)
         except jwt.ExpiredSignatureError:
-            return Response(code=500, message="error", result={"data": "Token has expired"})
+            return Response(code=401, message="error", result={"data": "Token has expired"})
 
         except jwt.InvalidTokenError:
-            return Response(code=500, message="error", result={"data": "Invalid token"})
+            return Response(code=401, message="error", result={"data": "Invalid token"})
 
     return wrapper

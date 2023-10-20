@@ -48,3 +48,5 @@ class UserMenu(models.Model):
 
     def permission(self):
         return UserPermission.objects.get(type=self.permission_type)
+
+

@@ -1,6 +1,7 @@
 import json
 from datetime import datetime
 
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from rest_framework.decorators import api_view
 from rest_framework_simplejwt.tokens import RefreshToken
 from utils.response_utils import Response
@@ -92,13 +93,9 @@ def user_info(request):
 @validate_token
 @api_view(['POST'])
 def change_password(request):
-    print(1)
     old_password = request.data.get('oldpassword')
-    print(old_password)
     new_password = request.data.get('password')
-    print(new_password)
     confirm_password = request.data.get('repassword')
-    print(confirm_password)
 
     # 获取当前用户对象
     user = request.user
@@ -119,3 +116,41 @@ def change_password(request):
     user.save()
 
     return Response(code=200, message="success", result={"data": "修改密码成功!!!"})
+
+
+@api_view(["GET"])
+def user_list(request):
+    page_number = request.GET.get('page')
+    items_per_page = 10  # 每页显示的条目数量
+
+    queryset = UserProfile.objects.all().order_by('-created_at')
+    paginator = Paginator(queryset, items_per_page)
+
+    try:
+        page = paginator.page(page_number)
+    except EmptyPage:
+        return Response(code=500, message='error', result={'data': 'Page not found'})
+
+    data = [
+        {'id': item.id, 'username': item.username, 'create_time': item.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+         'permission_id': item.permission_id}
+        for item in page]
+
+    # 'page_number': page.number, 'num_pages': paginator.num_pages
+    return Response(code=200, message="success",
+                    result={'data': data, "totalCount": paginator.count})
+
+
+@api_view(["POST"])
+def delete_user(request):
+    id = request.data.get('id')
+    try:
+        UserProfile.objects.filter(id=id).delete()
+        return Response(code=200, message="success")
+    except Exception as e:
+        return Response(code=500, message="error", result={"data", e})
+
+
+# @api_view(["POST"])
+# def update_user(request):
+#
